@@ -25,6 +25,8 @@ import org.eclipse.draw2dl.geometry.Point;
 import org.eclipse.draw2dl.geometry.Rectangle;
 import org.eclipse.gef3.*;
 import org.eclipse.gef3.tools.DirectEditManager;
+import org.jkiss.code.Nullable;
+import org.jkiss.dbeaver.erd.model.ERDAssociation;
 import org.jkiss.dbeaver.erd.model.ERDElement;
 import org.jkiss.dbeaver.erd.model.ERDEntity;
 import org.jkiss.dbeaver.erd.model.ERDEntityAttribute;
@@ -32,6 +34,7 @@ import org.jkiss.dbeaver.erd.ui.ERDUIUtils;
 import org.jkiss.dbeaver.erd.ui.editor.ERDGraphicalViewer;
 import org.jkiss.dbeaver.erd.ui.figures.AttributeItemFigure;
 import org.jkiss.dbeaver.erd.ui.figures.EditableLabel;
+import org.jkiss.dbeaver.erd.ui.figures.EntityAttributeAnchor;
 import org.jkiss.dbeaver.erd.ui.figures.EntityFigure;
 import org.jkiss.dbeaver.erd.ui.model.EntityDiagram;
 import org.jkiss.dbeaver.erd.ui.policy.EntityConnectionEditPolicy;
@@ -39,6 +42,7 @@ import org.jkiss.dbeaver.erd.ui.policy.EntityContainerEditPolicy;
 import org.jkiss.dbeaver.erd.ui.policy.EntityEditPolicy;
 import org.jkiss.dbeaver.model.DBPEvaluationContext;
 import org.jkiss.dbeaver.model.DBUtils;
+import org.jkiss.utils.CommonUtils;
 
 import java.beans.PropertyChangeEvent;
 import java.util.List;
@@ -200,6 +204,19 @@ public class EntityPart extends NodePart {
 
     @Override
     public ConnectionAnchor getSourceConnectionAnchor(ConnectionEditPart connection) {
+        ERDAssociation association = ((AssociationPart) connection).getAssociation();
+        if (!CommonUtils.isEmpty(association.getSourceAttributes())) {
+            ERDEntityAttribute sourceAttribute = association.getSourceAttributes().get(0);
+            EditPart sourceEditPart = connection.getSource();
+            if (sourceEditPart instanceof EntityPart) {
+                EntityFigure entityFigure = ((EntityPart) sourceEditPart).getFigure();
+                AttributeItemFigure attrFigure = findAttributeItemFigure(entityFigure, sourceAttribute);
+                if (attrFigure != null) {
+                    return new EntityAttributeAnchor(entityFigure, attrFigure, true);
+                }
+            }
+        }
+
         return new ChopboxAnchor(getFigure());
     }
 
@@ -211,6 +228,18 @@ public class EntityPart extends NodePart {
 
     @Override
     public ConnectionAnchor getTargetConnectionAnchor(ConnectionEditPart connection) {
+        ERDAssociation association = ((AssociationPart) connection).getAssociation();
+        if (!CommonUtils.isEmpty(association.getTargetAttributes())) {
+            ERDEntityAttribute targetAttribute = association.getTargetAttributes().get(0);
+            EditPart targetEditPart = connection.getTarget();
+            if (targetEditPart instanceof EntityPart) {
+                EntityFigure entityFigure = ((EntityPart) targetEditPart).getFigure();
+                AttributeItemFigure attrFigure = findAttributeItemFigure(entityFigure, targetAttribute);
+                if (attrFigure != null) {
+                    return new EntityAttributeAnchor(entityFigure, attrFigure, false);
+                }
+            }
+        }
         return new ChopboxAnchor(getFigure());
         //return new BottomAnchor(getFigure());
     }
@@ -218,6 +247,15 @@ public class EntityPart extends NodePart {
     @Override
     public ConnectionAnchor getTargetConnectionAnchor(Request request) {
         return new ChopboxAnchor(getFigure());
+    }
+
+    @Nullable
+    private static AttributeItemFigure findAttributeItemFigure(EntityFigure entityFigure, ERDEntityAttribute sourceAttribute) {
+        AttributeItemFigure attrFigure = entityFigure.getColumnsFigure() == null ? null : entityFigure.getColumnsFigure().findAttribute(sourceAttribute);
+        if (attrFigure == null) {
+            attrFigure = entityFigure.getKeyFigure() == null ? null : entityFigure.getKeyFigure().findAttribute(sourceAttribute);
+        }
+        return attrFigure;
     }
 
     /**

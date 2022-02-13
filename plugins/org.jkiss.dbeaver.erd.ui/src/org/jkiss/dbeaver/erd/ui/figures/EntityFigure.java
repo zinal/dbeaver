@@ -298,4 +298,9 @@ public class EntityFigure extends Figure {
             super.remove(figure);
         }
     }
+
+    @Override
+    public String toString() {
+        return "EntityFigure(" + part.getEntity().getName() + ")";
+    }
 }

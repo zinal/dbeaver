@@ -24,6 +24,7 @@ import org.eclipse.draw2dl.geometry.Insets;
 import org.eclipse.draw2dl.geometry.Rectangle;
 import org.eclipse.jface.resource.ColorRegistry;
 import org.jkiss.dbeaver.erd.model.ERDEntity;
+import org.jkiss.dbeaver.erd.model.ERDEntityAttribute;
 import org.jkiss.dbeaver.erd.ui.ERDUIConstants;
 import org.jkiss.dbeaver.ui.UIUtils;
 
@@ -65,6 +66,15 @@ public class AttributeListFigure extends Figure {
             }
         }
         return result;
+    }
+
+    public AttributeItemFigure findAttribute(ERDEntityAttribute attribute) {
+        for (IFigure child : getChildren()) {
+            if (child instanceof AttributeItemFigure && ((AttributeItemFigure) child).getAttribute() == attribute) {
+                return (AttributeItemFigure) child;
+            }
+        }
+        return null;
     }
 
     class ColumnFigureBorder extends AbstractBorder {

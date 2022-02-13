@@ -174,4 +174,9 @@ public class AttributeItemFigure extends Figure
         }
         return super.getBounds();
     }
+
+    @Override
+    public String toString() {
+        return "AttributeItemFigure(" + getAttribute().getName() + ")";
+    }
 }
