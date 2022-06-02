@@ -45,6 +45,7 @@ import org.jkiss.dbeaver.model.preferences.DBPPreferenceStore;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.registry.BaseWorkspaceImpl;
 import org.jkiss.dbeaver.registry.EclipseApplicationImpl;
+import org.jkiss.dbeaver.registry.TimezoneRegistry;
 import org.jkiss.dbeaver.registry.updater.VersionDescriptor;
 import org.jkiss.dbeaver.runtime.DBWorkbench;
 import org.jkiss.dbeaver.ui.app.standalone.rpc.DBeaverInstanceServer;
@@ -237,7 +238,7 @@ public class DBeaverApplication extends EclipseApplicationImpl implements DBPApp
         }
 
         initDebugWriter();
-
+        TimezoneRegistry.overrideTimezone();
         updateSplashHandler();
 
         final Runtime runtime = Runtime.getRuntime();
@@ -307,6 +308,7 @@ public class DBeaverApplication extends EclipseApplicationImpl implements DBPApp
             display = null;
         }
     }
+
 
     private void markLocationReadOnly(Location instanceLoc) {
         try {
@@ -383,7 +385,7 @@ public class DBeaverApplication extends EclipseApplicationImpl implements DBPApp
 
     @NotNull
     private static Collection<String> getBackedUpWorkspaces() {
-        if (!Files.exists(FILE_WITH_WORKSPACES)) {
+        if (!Files.exists(FILE_WITH_WORKSPACES) || Files.isDirectory(FILE_WITH_WORKSPACES)) {
             return Collections.emptyList();
         }
         try {
@@ -395,10 +397,17 @@ public class DBeaverApplication extends EclipseApplicationImpl implements DBPApp
         }
     }
 
-    private static void saveWorkspacesToBackup(@NotNull Iterable<? extends CharSequence> workspaces) {
+    private static void saveWorkspacesToBackup(@NotNull List<? extends CharSequence> workspaces) {
         try {
-            if (!Files.exists(FILE_WITH_WORKSPACES)) {
-                Files.createDirectories(FILE_WITH_WORKSPACES);
+            if (!Files.exists(FILE_WITH_WORKSPACES.getParent())) {
+                Files.createDirectories(FILE_WITH_WORKSPACES.getParent());
+            } else if (Files.isDirectory(FILE_WITH_WORKSPACES)) {
+                // Bug in 22.0.5
+                try {
+                    Files.delete(FILE_WITH_WORKSPACES);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             Files.write(FILE_WITH_WORKSPACES, workspaces, StandardOpenOption.CREATE, StandardOpenOption.WRITE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException e) {

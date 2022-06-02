@@ -807,7 +807,7 @@ public class SQLEditor extends SQLEditorBase implements
                 parent,
                 resultSetOrientation.getSashOrientation() | SWT.SMOOTH);
         CSSUtils.setCSSClass(resultsSash, DBStyles.COLORED_BY_CONNECTION_TYPE);
-        resultsSash.setSashWidth(5);
+        resultsSash.setSashWidth(8);
 
         UIUtils.setHelp(resultsSash, IHelpContextIds.CTX_SQL_EDITOR);
 
@@ -981,6 +981,8 @@ public class SQLEditor extends SQLEditorBase implements
 */
 
         sideToolBar.setLayoutData(new GridData(GridData.FILL_VERTICAL | GridData.VERTICAL_ALIGN_BEGINNING));
+        CSSUtils.setCSSClass(sideToolBar, DBStyles.COLORED_BY_CONNECTION_TYPE);
+        sideToolBar.pack();
     }
 
     private void createPresentationSwitchBar(Composite sqlEditorPanel) {
@@ -2318,7 +2320,8 @@ public class SQLEditor extends SQLEditorBase implements
         final boolean isSingleQuery = !forceScript && (queries.size() == 1);
         if (isSingleQuery && queries.get(0) instanceof SQLQuery) {
             SQLQuery query = (SQLQuery) queries.get(0);
-            if (query.isDeleteUpdateDangerous()) {
+            boolean isDropTable = query.isDropTableDangerous();
+            if (query.isDeleteUpdateDangerous() || isDropTable) {
                 String targetName = "multiple tables";
                 if (query.getEntityMetadata(false) != null) {
                     targetName = query.getEntityMetadata(false).getEntityName();
@@ -2326,7 +2329,7 @@ public class SQLEditor extends SQLEditorBase implements
                 if (ConfirmationDialog.showConfirmDialogEx(
                     ResourceBundle.getBundle(SQLEditorMessages.BUNDLE_NAME),
                     getSite().getShell(),
-                    SQLPreferenceConstants.CONFIRM_DANGER_SQL,
+                    isDropTable ? SQLPreferenceConstants.CONFIRM_DROP_SQL : SQLPreferenceConstants.CONFIRM_DANGER_SQL,
                     ConfirmationDialog.CONFIRM,
                     ConfirmationDialog.WARNING,
                     query.getType().name(),
@@ -2548,7 +2551,11 @@ public class SQLEditor extends SQLEditorBase implements
             return;
         }
 
-        DatabaseEditorUtils.setPartBackground(this, resultTabs);
+        if (resultTabs != null) {
+            DatabaseEditorUtils.setPartBackground(this, resultTabs);
+            resultsSash.setBackground(resultTabs.getBackground());
+            sideToolBar.setBackground(resultTabs.getBackground());
+        }
 
         if (getSourceViewerConfiguration() instanceof SQLEditorSourceViewerConfiguration) {
             ((SQLEditorSourceViewerConfiguration) getSourceViewerConfiguration()).onDataSourceChange();
