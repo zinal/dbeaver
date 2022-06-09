@@ -19,6 +19,11 @@ package org.jkiss.dbeaver.model.impl.app;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.jkiss.dbeaver.model.impl.AbstractDescriptor;
 import org.jkiss.utils.CommonUtils;
+import org.osgi.framework.Version;
+
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.util.jar.Manifest;
 
 /**
  * DBeaver application descriptor.
@@ -96,6 +101,38 @@ public class ApplicationDescriptor extends AbstractDescriptor {
 
     String getParentId() {
         return parentId;
+    }
+
+    public Version getVersion() {
+        var bundle = getContributorBundle();
+        if (bundle == null) {
+            return readVersionFromManifest();
+        }
+        return getContributorBundle().getVersion();
+    }
+
+    private Version readVersionFromManifest() {
+        try {
+            var manifestUrls = getClass().getClassLoader().getResources("MANIFEST.MF");
+            while (manifestUrls.hasMoreElements()) {
+                var manifestUrl = manifestUrls.nextElement();
+                try (var manifestIs = new BufferedInputStream(new FileInputStream(manifestUrl.getFile()))) {
+                    Manifest manifest = new Manifest(manifestIs);
+                    var mainAttrs = manifest.getMainAttributes();
+                    if (!getPluginId().equals(mainAttrs.getValue("Automatic-Module-Name"))) {
+                        continue;
+                    }
+                    var bundleVersion = manifest.getMainAttributes().getValue("Bundle-Version");
+                    if (bundleVersion == null) {
+                        return new Version(0, 0, 0);
+                    }
+                    return new Version(bundleVersion);
+                }
+            }
+            return new Version(0, 0, 0);
+        } catch (Exception e) {
+            return new Version(0, 0, 0);
+        }
     }
 
 }

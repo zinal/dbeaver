@@ -722,6 +722,8 @@ public class GeneralUtils {
 
         String adapterId = adapter.getName();
         Object result = queryAdapterManager(sourceObject, adapterId, allowActivation);
+        System.out.println("adapter");
+        System.out.println(result);
         if (result != null) {
             // Sanity-check
             if (!adapter.isInstance(result)) {

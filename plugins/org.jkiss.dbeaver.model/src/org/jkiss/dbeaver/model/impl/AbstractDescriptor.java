@@ -304,11 +304,10 @@ public abstract class AbstractDescriptor {
         return getObjectClass(getContributorBundle(), className, type);
     }
 
-    public static <T> Class<T> getObjectClass(@NotNull Bundle fromBundle, @NotNull String className, Class<T> type)
-    {
+    public static <T> Class<T> getObjectClass(@Nullable Bundle fromBundle, @NotNull String className, Class<T> type) {
         Class<?> objectClass;
         try {
-            objectClass = fromBundle.loadClass(className);
+            objectClass = fromBundle == null ? AbstractDescriptor.class.getClassLoader().loadClass(className) : fromBundle.loadClass(className);
         } catch (Throwable ex) {
             log.error("Can't determine object class '" + className + "'", ex);
             return null;
