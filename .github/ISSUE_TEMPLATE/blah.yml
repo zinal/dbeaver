@@ -11,8 +11,8 @@ body:
     id: dbeaver-version
     attributes:
       label: DBeaver version
-      description: Could you please fill a version of DBeaver do you use?
-      placeholder: ex. 22.1.0
+      description: What version of DBeaver are you running?
+      placeholder: ex. Community Edition 22.1.0
     validations:
       required: false
   - type: input
@@ -32,26 +32,6 @@ body:
       value: "A bug happened!"
     validations:
       required: true
-  - type: dropdown
-    id: version
-    attributes:
-      label: Version
-      description: What version of our software are you running?
-      options:
-        - 1.0.2 (Default)
-        - 1.0.3 (Edge)
-    validations:
-      required: true
-  - type: dropdown
-    id: browsers
-    attributes:
-      label: What browsers are you seeing the problem on?
-      multiple: true
-      options:
-        - Firefox
-        - Chrome
-        - Safari
-        - Microsoft Edge
   - type: textarea
     id: logs
     attributes:
