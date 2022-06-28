@@ -38,7 +38,14 @@ body:
       label: Relevant log output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: shell
-  - type: checkboxes
+  - type: markdown
+    attributes:
+      value: |
+        After creating a bug report, we will review it. We may need logs and in this article we talked about how to extract them [Wiki:Log files](https://github.com/dbeaver/dbeaver/wiki/Log-files)
+
+
+
+- type: checkboxes
     id: terms
     attributes:
       label: Code of Conduct
