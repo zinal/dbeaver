@@ -40,7 +40,7 @@ body:
       render: shell
   - type: markdown
     attributes:
-      value: |
+      value: ||
         After creating a bug report, we will review it. We may need logs and in this article we talked about how to extract them [Wiki:Log files](https://github.com/dbeaver/dbeaver/wiki/Log-files)
 
 
