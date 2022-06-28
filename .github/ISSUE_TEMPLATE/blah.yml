@@ -1,20 +1,26 @@
 name: Bug Report
 description: File a bug report
 title: "[Bug]: "
-labels: [bug, triage]
-assignees:
-  - octocat
+labels: [bug, wait for review]
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for taking the time to fill out this bug report!
   - type: input
-    id: contact
+    id: dbeaver version
     attributes:
-      label: Contact Details
-      description: How can we get in touch with you if we need more info?
-      placeholder: ex. email@example.com
+      label: DBeaver version
+      description: Could you please fill a version of DBeaver do you use?
+      placeholder: ex. 22.1.0
+    validations:
+      required: false
+  - type: input
+    id: os kind
+    attributes:
+      label: Kind of operating system
+      description: Could you please fill a OS and enhancment do you use?
+      placeholder: ex. Ubuntu 20.4
     validations:
       required: false
   - type: textarea
