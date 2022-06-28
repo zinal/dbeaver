@@ -8,7 +8,7 @@ body:
       value: |
         Thanks for taking the time to fill out this bug report!
   - type: input
-    id: dbeaver version
+    id: dbeaver-version
     attributes:
       label: DBeaver version
       description: Could you please fill a version of DBeaver do you use?
