@@ -16,7 +16,7 @@ body:
     validations:
       required: false
   - type: input
-    id: os kind
+    id: os-kind
     attributes:
       label: Kind of operating system
       description: Could you please fill a OS and enhancment do you use?
