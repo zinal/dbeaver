@@ -2,7 +2,7 @@ name: Bug Report
 description: Create a report to help us improve
 title: "[Bug]: "
 labels: [bug, wait for review]
-body:
+body [0]:
   - type: markdown
     attributes:
       value: |
@@ -39,3 +39,10 @@ body:
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       placeholder: After creating a bug report, we will review it. We may need logs and in this article we talked about how to extract them [Wiki:Log files](https://github.com/dbeaver/dbeaver/wiki/Log-files)
       render: shell
+body[1]:
+- type: markdown
+  attributes:
+    value: "Thanks for taking the time to fill out this bug! If you need real-time help, join us on Discord."
+- type: markdown
+  attributes:
+    value: "This is working now!"
