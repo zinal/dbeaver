@@ -38,10 +38,3 @@ body:
       label: Relevant log output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: shell
-  body:
-- type: markdown
-  value: "## Welcome!"
-- type: markdown
-  attributes:
-    value: |
-      Thanks for taking the time to fill out this bug! If you need real-time help, join us on Discord.
