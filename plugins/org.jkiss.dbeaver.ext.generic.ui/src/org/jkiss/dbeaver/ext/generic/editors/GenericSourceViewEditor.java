@@ -19,6 +19,7 @@ package org.jkiss.dbeaver.ext.generic.editors;
 
 import org.jkiss.dbeaver.model.DBPScriptObject;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
+import org.jkiss.dbeaver.model.sql.SQLUtils;
 import org.jkiss.dbeaver.model.struct.DBSObject;
 import org.jkiss.dbeaver.model.struct.DBSObjectWithScript;
 import org.jkiss.dbeaver.ui.editors.sql.SQLSourceViewer;
@@ -38,7 +39,8 @@ public class GenericSourceViewEditor<T extends DBPScriptObject & DBSObject> exte
 
     @Override
     protected void setSourceText(DBRProgressMonitor monitor, String sourceText) {
-        getInputPropertySource().setPropertyValue(monitor, "objectDefinitionText", sourceText);
+        getInputPropertySource().setPropertyValue(monitor, "objectDefinitionText",
+            SQLUtils.removeQueryDelimiter(getDataSource().getSQLDialect(), sourceText));
     }
 
 }
