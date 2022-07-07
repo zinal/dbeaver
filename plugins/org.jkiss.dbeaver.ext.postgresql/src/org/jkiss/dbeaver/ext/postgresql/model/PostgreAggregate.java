@@ -18,13 +18,11 @@ package org.jkiss.dbeaver.ext.postgresql.model;
 
 import org.jkiss.code.NotNull;
 import org.jkiss.dbeaver.DBException;
-import org.jkiss.dbeaver.model.DBPObjectWithLazyDescription;
-import org.jkiss.dbeaver.model.DBPOverloadedObject;
 import org.jkiss.dbeaver.model.impl.jdbc.JDBCUtils;
 import org.jkiss.dbeaver.model.meta.Property;
-import org.jkiss.dbeaver.model.meta.PropertyLength;
 import org.jkiss.dbeaver.model.runtime.DBRProgressMonitor;
 import org.jkiss.dbeaver.model.struct.DBSObject;
+import org.jkiss.dbeaver.model.struct.rdb.DBSProcedureType;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -34,28 +32,27 @@ import java.util.List;
 /**
  * PostgreAggregate
  */
-public class PostgreAggregate implements PostgreObject, DBPOverloadedObject, DBPObjectWithLazyDescription {
+public class PostgreAggregate extends PostgreProcedure {
 
     private long oid;
     private final PostgreSchema schema;
     private String name;
-    private boolean persisted;
-    private PostgreProcedure function;
+    private final boolean persisted;
 
     public PostgreAggregate(DBRProgressMonitor monitor, PostgreSchema schema, ResultSet dbResult)
         throws SQLException, DBException {
+        super(schema);
         this.schema = schema;
+        loadAggregateInfo(monitor, dbResult);
         this.loadInfo(monitor, dbResult);
+        persisted = true;
+
     }
 
-    private void loadInfo(DBRProgressMonitor monitor, ResultSet dbResult)
+    private void loadAggregateInfo(DBRProgressMonitor monitor, ResultSet dbResult)
         throws SQLException, DBException {
         this.oid = JDBCUtils.safeGetLong(dbResult, "proc_oid");
         this.name = JDBCUtils.safeGetString(dbResult, "proc_name");
-
-        this.function = schema.getProcedure(monitor, this.oid);
-
-        this.persisted = true;
     }
 
     @NotNull
@@ -68,30 +65,37 @@ public class PostgreAggregate implements PostgreObject, DBPOverloadedObject, DBP
 
     @Property(viewable = true, order = 2)
     public List<PostgreDataType> getInputTypes(DBRProgressMonitor monitor) throws DBException {
-        if (function == null) {
-            return null;
-        }
         List<PostgreDataType> result = new ArrayList<>();
-        for (PostgreProcedureParameter param : function.getInputParameters()) {
+        for (PostgreProcedureParameter param : getInputParameters()) {
             result.add(param.getParameterType());
         }
         return result;
     }
 
+    @Override
+    public boolean supportsObjectDefinitionOption(String option) {
+        return super.supportsObjectDefinitionOption(option);
+    }
+
+    @Override
+    public DBSProcedureType getProcedureType() {
+        return DBSProcedureType.FUNCTION;
+    }
+
+    @Override
+    public DBSObject refreshObject(@NotNull DBRProgressMonitor monitor) throws DBException {
+        return getContainer().getAggregateCache().refreshObject(monitor, getContainer(), this);
+    }
+
     @Property(viewable = true, order = 3)
     public PostgreDataType getOutputType(DBRProgressMonitor monitor) throws DBException {
-        return function == null ? null : function.getReturnType();
+        return getReturnType();
     }
 
     @Property(viewable = false, order = 80)
     @Override
     public long getObjectId() {
         return oid;
-    }
-
-    @Property(viewable = true, order = 10)
-    public PostgreProcedure getFunction() throws DBException {
-        return function;
     }
 
     @Override
@@ -116,10 +120,21 @@ public class PostgreAggregate implements PostgreObject, DBPOverloadedObject, DBP
         return null;
     }
 
+
+
     @Override
-    @Property(viewable = true, length = PropertyLength.MULTILINE, order = 100)
-    public String getDescription(DBRProgressMonitor monitor) throws DBException {
-        return function == null ? null : function.getDescription();
+    public void setObjectDefinitionText(String sourceText) {
+        super.setObjectDefinitionText(sourceText);
+    }
+
+//    private loadAdditionalInfo() {
+//
+//    }
+
+    @Override
+    protected void createBody(DBRProgressMonitor monitor) throws DBException {
+        setBody("TO-BE DONE");
+
     }
 
     @Override
@@ -130,7 +145,7 @@ public class PostgreAggregate implements PostgreObject, DBPOverloadedObject, DBP
     @NotNull
     @Override
     public String getOverloadedName() {
-        return function == null ? name : PostgreProcedure.makeOverloadedName(schema, name, function.getInputParameters(), true, false);
+        return PostgreProcedure.makeOverloadedName(schema, name, getInputParameters(), true, false);
     }
 
 }

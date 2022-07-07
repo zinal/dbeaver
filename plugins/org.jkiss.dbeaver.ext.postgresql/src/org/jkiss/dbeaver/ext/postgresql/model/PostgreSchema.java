@@ -272,6 +272,10 @@ public class PostgreSchema implements
         return this.proceduresCache;
     }
 
+    public AggregateCache getAggregateCache() {
+        return aggregateCache;
+    }
+
     public IndexCache getIndexCache() {
         return indexCache;
     }
@@ -704,27 +708,27 @@ public class PostgreSchema implements
         }
     }
 
-    class AggregateCache extends JDBCObjectCache<PostgreSchema, PostgreAggregate> {
-
-        @NotNull
-        @Override
-        protected JDBCStatement prepareObjectsStatement(@NotNull JDBCSession session, @NotNull PostgreSchema owner)
-            throws SQLException {
-            final JDBCPreparedStatement dbStat = session.prepareStatement(
-                "SELECT p.oid AS proc_oid,p.proname AS proc_name,a.*\n" +
-                    "FROM pg_catalog.pg_aggregate a,pg_catalog.pg_proc p\n" +
-                    "WHERE p.oid=a.aggfnoid AND p.pronamespace=?\n" +
-                    "ORDER BY p.proname"
-            );
-            dbStat.setLong(1, PostgreSchema.this.getObjectId());
-            return dbStat;
-        }
+    class AggregateCache extends JDBCObjectLookupCache<PostgreSchema, PostgreAggregate> {
 
         @Override
         protected PostgreAggregate fetchObject(@NotNull JDBCSession session, @NotNull PostgreSchema owner, @NotNull JDBCResultSet dbResult)
             throws SQLException, DBException
         {
             return new PostgreAggregate(session.getProgressMonitor(), owner, dbResult);
+        }
+
+        @NotNull
+        @Override
+        public JDBCStatement prepareLookupStatement(@NotNull JDBCSession session, @NotNull PostgreSchema postgreSchema,
+            @Nullable PostgreAggregate object, @Nullable String objectName) throws SQLException {
+            final JDBCPreparedStatement dbStat = session.prepareStatement(
+                "SELECT p.oid AS proc_oid,p.proname AS proc_name,a.*,p.*\n" +
+                    "FROM pg_catalog.pg_aggregate a,pg_catalog.pg_proc p\n" +
+                    "WHERE p.oid=a.aggfnoid AND p.pronamespace=?\n" +
+                    "ORDER BY p.proname"
+            );
+            dbStat.setLong(1, PostgreSchema.this.getObjectId());
+            return dbStat;
         }
     }
 
@@ -1109,7 +1113,8 @@ public class PostgreSchema implements
                     (session.getDataSource().isServerVersionAtLeast(8, 4) ? "pg_catalog.pg_get_expr(p.proargdefaults, 0)" : "NULL") + " as arg_defaults,d.description\n" +
                     "FROM pg_catalog." + serverType.getProceduresSystemTable() + " p\n" +
                     "LEFT OUTER JOIN pg_catalog.pg_description d ON d.objoid=p." + oidColumn + "\n" +
-                    "WHERE p.pronamespace=?" +
+                    "WHERE " + (session.getDataSource().isServerVersionAtLeast(11, 0) ? "prokind != 'a' "
+                    : "proisagg IS FALSE ") + "AND p.pronamespace=? " +
                     (object == null ? "" : " AND p." + oidColumn + "=?") +
                     "\nORDER BY p.proname"
             );

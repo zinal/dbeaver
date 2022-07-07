@@ -140,7 +140,7 @@ public class PostgreProcedure extends AbstractProcedure<PostgreDataSource, Postg
         loadInfo(monitor, dbResult);
     }
 
-    private void loadInfo(DBRProgressMonitor monitor, ResultSet dbResult) {
+    protected void loadInfo(DBRProgressMonitor monitor, ResultSet dbResult) {
         PostgreDataSource dataSource = getDataSource();
 
         this.oid = JDBCUtils.safeGetLong(dbResult, "poid");
@@ -331,6 +331,10 @@ public class PostgreProcedure extends AbstractProcedure<PostgreDataSource, Postg
         return body;
     }
 
+    public void setBody(String body) {
+        this.body = body;
+    }
+
     @Override
     public List<PostgreProcedureParameter> getParameters(@Nullable DBRProgressMonitor monitor) {
         return params;
@@ -406,24 +410,7 @@ public class PostgreProcedure extends AbstractProcedure<PostgreDataSource, Postg
             procDDL = omitHeader ? procSrc : generateFunctionDeclaration(getLanguage(monitor), returnTypeName, procSrc);
         } else {
             if (body == null) {
-                if (!isPersisted()) {
-                    PostgreDataType returnType = getReturnType();
-                    String returnTypeName = returnType == null ? null : returnType.getFullTypeName();
-                    body = generateFunctionDeclaration(getLanguage(monitor), returnTypeName, "\n\t-- Enter function body here\n");
-                } else if (oid == 0 || isAggregate) {
-                    // No OID so let's use old (bad) way
-                    body = this.procSrc;
-                } else {
-                    if (isAggregate) {
-                        body = "-- Aggregate function";
-                    } else {
-                        try (JDBCSession session = DBUtils.openMetaSession(monitor, this, "Read procedure body")) {
-                            body = JDBCUtils.queryString(session, "SELECT pg_get_functiondef(" + getObjectId() + ")");
-                        } catch (SQLException e) {
-                            throw new DBException("Error reading procedure body", e);
-                        }
-                    }
-                }
+                createBody(monitor);
             }
             procDDL = body;
         }
@@ -442,6 +429,29 @@ public class PostgreProcedure extends AbstractProcedure<PostgreDataSource, Postg
         }
 
         return procDDL;
+    }
+
+
+
+    protected void createBody(DBRProgressMonitor monitor) throws DBException {
+        if (!isPersisted()) {
+            PostgreDataType returnType = getReturnType();
+            String returnTypeName = returnType == null ? null : returnType.getFullTypeName();
+            body = generateFunctionDeclaration(getLanguage(monitor), returnTypeName, "\n\t-- Enter function body here\n");
+        } else if (oid == 0 || isAggregate) {
+            // No OID so let's use old (bad) way
+            body = this.procSrc;
+        } else {
+            if (isAggregate) {
+                body = "-- Aggregate function";
+            } else {
+                try (JDBCSession session = DBUtils.openMetaSession(monitor, this, "Read procedure body")) {
+                    body = JDBCUtils.queryString(session, "SELECT pg_get_functiondef(" + getObjectId() + ")");
+                } catch (SQLException e) {
+                    throw new DBException("Error reading procedure body", e);
+                }
+            }
+        }
     }
 
     protected String generateFunctionDeclaration(PostgreLanguage language, String returnTypeName, String functionBody) {
